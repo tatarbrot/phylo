@@ -49,54 +49,64 @@ class Alignment:
 
     def score_cell(self, r, c):
         scores = []
+        pos = []
         scores.append(self.alignment_matrix[r-1][c-1] + self.score(r,c))
-        scores.append(self.alignment_matrix[r][c-1] + self.delta)
-        scores.append(self.alignment_matrix[r-1][c] + self.delta)
+        pos.append((r-1,c-1))
 
-        print scores, max(scores)
+        scores.append(self.alignment_matrix[r][c-1] + self.delta)
+        pos.append((r,c-1))
+
+        scores.append(self.alignment_matrix[r-1][c] + self.delta)
+        pos.append((r-1,c))
+
+        # may be biased !
+        m = max(scores)
+        idx = np.where(scores == m)
+        idx =  idx[0][0]
+
+        self.route[r][c] = pos[idx]
         self.alignment_matrix[r][c] = max(scores)
 
     def align(self):
         self.fill_borders()
-
         rows = self.alignment_matrix.shape[0]
         cols = self.alignment_matrix.shape[1]
+        self.route = np.array([[(0,0) for _ in range(cols)] for _ in range(rows)])
         for r in range(1,rows):
             for c in range(1, cols):
                 self.score_cell(r,c)
 
-        # find routes
-        scores, routes = self.count_score_from(rows-1, cols-1)
-        self.scores = scores
-        self.routes = routes
 
     def output(self):
-        r_old = -1
-        c_old = -1
+        rows = self.alignment_matrix.shape[0]
+        cols = self.alignment_matrix.shape[1]
 
-        for i in range(len(self.scores)):
-            s1 = ''
-            s2 = ''
-            for j in range(len(self.routes[i])-1, 0, -1):
-                p = self.routes[i][j]
-                r = p[0]
-                c = p[1]
-                if r == r_old:
-                    s1 = '-{0}'.format(s1)
-                else:
-                    s1 = '{0}{1}'.format(self.sequences[0][r], s1)
+        r = rows-1
+        c = cols-1
 
-                if c == c_old:
-                    s2 = '-{0}'.format(s2)
-                else:
-                    s2 = '{0}{1}'.format(self.sequences[1][c], s2)
+        s1 = ''
+        s2 = ''
+        score = 0
 
-                r_old = r
-                c_old = c
+        while (r,c) != (0,0):
+            p = self.route[r][c]
+            score += self.alignment_matrix[r][c]
+            if p[0] == r-1 and p[1] == c-1:
+                s1 = '{0}{1}'.format(self.sequences[0][r], s1)
+                s2 = '{0}{1}'.format(self.sequences[1][c], s2)
+            elif p[0] == r and p[1] == c-1:
+                s1 = '-{0}'.format(s1)
+                s2 = '{0}{1}'.format(self.sequences[1][c], s2)
+            elif p[0] == r-1 and p[1] == c:
+                s1 = '{0}{1}'.format(self.sequences[0][r], s1)
+                s2 = '-{0}'.format(s2)
 
-            print self.scores[i]
-            print 'seq1: ', s1
-            print 'seq2: ', s2
+            r = p[0]
+            c = p[1]
+
+        print score
+        print 'seq1: ', s1
+        print 'seq2: ', s2
 
     def count_score_from(self, r, c):
         if r == 0 and c == 0:
@@ -149,10 +159,11 @@ s1 = 'AAGTTTCATTGGAGCCACCACTCTTATAATTGCCCATGGCCTCACCTCCTCCCTATTATTTTGCCTAGCAAATA
 # Lemur catta
 s2 = 'AAGCTTCATAGGAGCAACCATTCTAATAATCGCACATGGCCTTACATCATCCATATTATTCTGTCTAGCCAACTCTAACTACGAACGAATCCATAGCCGTACAATACTACTAGCACGAGGGATCCAAACCATTCTCCCTCTTATAGCCACCTGATGACTACTCGCCAGCCTAACTAACCTAGCCCTACCCACCTCTATCAATTTAATTGGCGAACTATTCGTCACTATAGCATCCTTCTCATGATCAAACATTACAATTATCTTAATAGGCTTAAATATGCTCATCACCGCTCTCTATTCCCTCTATATATTAACTACTACACAACGAGGAAAACTCACATATCATTCGCACAACCTAAACCCATCCTTTACACGAGAAAACACCCTTATATCCATACACATACTCCCCCTTCTCCTATTTACCTTAAACCCCAAAATTATTCTAGGACCCACGTACTGTAAATATAGTTTAAA-AAAACACTAGATTGTGAA'
 
-#a = Alignment([s1, s2])
+a = Alignment([s1, s2])
 #a = Alignment(['VAHVDDMPNALSALSDLHAHKL', 'AIQLQVTGVVVTDATLKNLGSVHVSKG'])
 #a = Alignment(['AAGTTTCATTGGAGCCACCACTCTTATAATTGCCCATGGCCTCACCTCCTCCCTATTA', 'AAGCTTCATAGGAGCAACCATTCTAATAATCGCACATGGCCTTACATCATCCATATTA'])
-a = Alignment(['why', 'what'])
+#a = Alignment(['what', 'why'])
+#a = Alignment(['GATTAG', 'ATTAC'])
 a.align()
 a.output()
 
