@@ -59,12 +59,24 @@ class Alignment:
         scores.append(self.alignment_matrix[r-1][c] + self.delta)
         pos.append((r-1,c))
 
-        # may be biased !
-        m = max(scores)
-        idx = np.where(scores == m)
-        idx =  idx[0][0]
+        pos = np.array(pos)
+        scores = np.array(scores)
 
-        self.route[r][c] = pos[idx]
+        # may be biased !
+        m = np.amax(scores)
+        idx = np.where(scores == m)
+        if len(idx[0]) == 1:
+            p = pos[idx[0][0]]
+        elif len(idx[0]) > 1:
+            check_pos = pos[idx]
+            check_scores = []
+            for cp in check_pos:
+                check_scores.append(self.alignment_matrix[cp[0]][cp[1]])
+
+            new_idx = np.where(np.array(check_scores) == np.amax(check_scores))
+            p = check_pos[new_idx[0][0]]
+
+        self.route[r][c] = p
         self.alignment_matrix[r][c] = max(scores)
 
     def align(self):
@@ -95,11 +107,11 @@ class Alignment:
                 s1 = '{0}{1}'.format(self.sequences[0][r], s1)
                 s2 = '{0}{1}'.format(self.sequences[1][c], s2)
             elif p[0] == r and p[1] == c-1:
-                s1 = '-{0}'.format(s1)
+                s1 = '.{0}'.format(s1)
                 s2 = '{0}{1}'.format(self.sequences[1][c], s2)
             elif p[0] == r-1 and p[1] == c:
                 s1 = '{0}{1}'.format(self.sequences[0][r], s1)
-                s2 = '-{0}'.format(s2)
+                s2 = '.{0}'.format(s2)
 
             r = p[0]
             c = p[1]
@@ -164,6 +176,7 @@ a = Alignment([s1, s2])
 #a = Alignment(['AAGTTTCATTGGAGCCACCACTCTTATAATTGCCCATGGCCTCACCTCCTCCCTATTA', 'AAGCTTCATAGGAGCAACCATTCTAATAATCGCACATGGCCTTACATCATCCATATTA'])
 #a = Alignment(['what', 'why'])
 #a = Alignment(['GATTAG', 'ATTAC'])
+#a = Alignment(['ATCGT', 'TGGTG'])
 a.align()
 a.output()
 
