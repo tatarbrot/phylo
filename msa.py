@@ -7,28 +7,94 @@ class Msa:
     def __init__(self, sequences, names = []):
         self.sequences = sequences
         self.names = names
-        self.distance_matrix = np.zeros([len(sequences), len(sequences)])
 
-        self.g_tree = range(len(sequences))
-
+        self.g_tree = np.array([])
 
     def align(self):
         # create guid tree
-        self.guide_tree()
+        self.build_guide_tree()
 
-    def guide_tree(self):
+    def build_guide_tree(self):
 
-        # matrix should be
-        for i in range(self.distance_matrix.shape[0]):
-            for j in range(i):
-                self.distance_matrix[i][j] = self.distance(i,j)
+        self.g_tree = range(len(sequences))
+        while len(self.g_tree) > 1:
+            d_m = np.zeros([len(self.g_tree), len(self.g_tree)])
+            for i in range(d_m.shape[0]):
+                for j in range(i):
+                    d_m[i][j] = self.distance(i,j)
 
+
+            # find minimums
+            minimums = []
+            for i in range(d_m.shape[0]):
+                minimums.append(np.amin(d_m[i][0:i]))
+
+            min_dist = min(minimums)
+            min_idx = np.where(d_m == min_dist)
+
+            min_idx[0][0], min_idx[1][0]
+
+            if min_idx[0][0] < min_idx[1][0]:
+                c_from = min_idx[1][0]
+                c_to = min_idx[0][0]
+            else:
+                c_from = min_idx[0][0]
+                c_to = min_idx[1][0]
+
+            # rebuild tree
+            new_el = '({0},{1})'.format(g_tree[c_from], g_tree[c_to])
+            g_tree[c_to] = new_el
+            g_tree.pop(c_from)
+
+            print g_tree
+
+
+    def hamming_distance(self, s1, s2):
+        d = 0
+        l = len(s1)
+        for i in range(l):
+            if s1[i] != s2[i]:
+                d += 1
+
+        return d
+
+    def tree_members(self, ti):
+        if type(ti) == type(1):
+            return [ti]
+        else:
+            m = []
+            for i in range(len(ti)):
+                if type(ti[i]) == type(1):
+                    m.append(ti[i])
+                else:
+                    other_m = self.tree_members(ti[i])
+                    m.extend(other_m)
+
+            return m
 
     def distance(self, i, j):
-        s1 = self.sequences[i]
-        s2 = self.sequences[j]
+        # group average & hamming distance
 
-        a = Alignment([s1, s2])
+        ti = self.g_tree[i]
+        tj = self.g_tree[j]
+
+        mi = self.tree_members(ti)
+        mj = self.tree_members(tj)
+        ni = len(mi)
+        nj = len(mj)
+
+        d = 0
+        for k in range(ni):
+            s1 = self.sequences[mi[k]]
+            for l in range(nj):
+                s2 = self.sequences[mj[l]]
+                a = Alignment([s1, s2])
+                a.align()
+                as1, as2 = a.output()
+
+                d += self.hamming_distance(as1, as2)
+
+        return d/(ni*nj)
 
 # Tarsius syrichta
 tarsius = 'AAGTTTCATTGGAGCCACCACTCTTATAATTGCCCATGGCCTCACCTCCTCCCTATTATTTTGCCTAGCAAATACAAACTACGAACGAGTCCACAGTCGAACAATAGCACTAGCCCGTGGCCTTCAAACCCTATTACCTCTTGCAGCAACATGATGACTCCTCGCCAGCTTAACCAACCTGGCCCTTCCCCCAACAATTAATTTAATCGGTGAACTGTCCGTAATAATAGCAGCATTTTCATGGTCACACCTAACTATTATCTTAGTAGGCCTTAACACCCTTATCACCGCCCTATATTCCCTATATATACTAATCATAACTCAACGAGGAAAATACACATATCATATCAACAATATCATGCCCCCTTTCACCCGAGAAAATACATTAATAATCATACACCTATTTCCCTTAATCCTACTATCTACCAACCCCAAAGTAATTATAGGAACCATGTACTGTAAATATAGTTTAAACAAAACATTAGATTGTGAGTCTAATAATAGAAGCCCAAAGATTTCTTATTTACCAAGAAAGTA-TGCAAGAACTGCTAACTCATGCCTCCATATATAACAATGTGGCTTTCTT-ACTTTTAAAGGATAGAAGTAATCCATCGGTCTTAGGAACCGAAAA-ATTGGTGCAACTCCAAATAAAAGTAATAAATTTATTTTCATCCTCCATTTTACTATCACTTACACTCTTAATTACCCCATTTATTATTACAACAACTAAAAAATATGAAACACATGCATACCCTTACTACGTAAAAAACTCTATCGCCTGCGCATTTATAACAAGCCTAGTCCCAATGCTCATATTTCTATACACAAATCAAGAAATAATCATTTCCAACTGACATTGAATAACGATTCATACTATCAAATTATGCCTAAGCTT'
@@ -45,10 +111,9 @@ pongo = 'AAGCTTCACCGGCGCAACCACCCTCATGATTGCCCATGGACTCACATCCTCCCTACTGTTCTGCCTAGCAA
 # hylobates
 hylobates = 'AGCTTTACAGGTGCAACCGTCCTCATAATCGCCCACGGACTAACCTCTTCCCTGCTATTCTGCCTTGCAAACTCAAACTACGAACGAACTCACAGCCGCATCATAATCCTATCTCGAGGGCTCCAAGCCTTACTCCCACTGATAGCCTTCTGATGACTCGCAGCAAGCCTCGCTAACCTCGCCCTACCCCCCACTATTAACCTCCTAGGTGAACTCTTCGTACTAATGGCCTCCTTCTCCTGGGCAAACACTACTATTACACTCACCGGGCTCAACGTACTAATCACGGCCCTATACTCCCTTTACATATTTATCATAACACAACGAGGCACACTTACACACCACATTAAAAACATAAAACCCTCACTCACACGAGAAAACATATTAATACTTATGCACCTCTTCCCCCTCCTCCTCCTAACCCTCAACCCTAACATCATTACTGGCTTTACTCCCTGTAAACATAGTTTAATCAAAACATTAGATTGTGAATCTAACAATAGAGGCTCG-AAACCTCTTGCTTACCGAGAAAGCC-CACAAGAACTGCTAACTCACTATCCCATGTATGACAACATGGCTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGGTCTTAGGACCCAAAAATTTTGGTGCAACTCCAAATAAAAGTAATAGCAATGTACACCACCATAGCCATTCTAACGCTAACCTCCCTAATTCCCCCCATTACAGCCACCCTTATTAACCCCAATAAAAAGAACTTATACCCGCACTACGTAAAAATGACCATTGCCTCTACCTTTATAATCAGCCTATTTCCCACAATAATATTCATGTGCACAGACCAAGAAACCATTATTTCAAACTGACACTGAACTGCAACCCAAACGCTAGAACTCTCCCTAAGCTT'
 
-sequences = {tarsius, lemur, homo, pan, gorilla, pongo, hylobates}
+sequences = [tarsius, lemur, homo, pan, gorilla, pongo, hylobates]
 names = ['Tarsius syrichta','Lemur catta','Homo sapiens', \
         'Pan','Gorilla','Pongo','Hylobates']
 
 m = Msa(sequences, names)
 m.align()
-
