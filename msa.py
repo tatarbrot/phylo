@@ -17,19 +17,20 @@ class Msa:
     def build_guide_tree(self):
 
         self.g_tree = range(len(sequences))
+        d_m = np.zeros([len(self.g_tree), len(self.g_tree)])
         while len(self.g_tree) > 1:
-            d_m = np.zeros([len(self.g_tree), len(self.g_tree)])
             for i in range(d_m.shape[0]):
                 for j in range(i):
-                    d_m[i][j] = self.distance(i,j)
+                    if d_m[i][j] == 0:
+                        d_m[i][j] = self.distance(i,j)
 
 
             # find minimums
-            minimums = []
-            for i in range(d_m.shape[0]):
-                minimums.append(np.amin(d_m[i][0:i]))
+            minimas = []
+            for i in range(1,d_m.shape[0]):
+                minimas.append(np.amin(d_m[i][0:i]))
 
-            min_dist = min(minimums)
+            min_dist = min(minimas)
             min_idx = np.where(d_m == min_dist)
 
             min_idx[0][0], min_idx[1][0]
@@ -42,11 +43,13 @@ class Msa:
                 c_to = min_idx[1][0]
 
             # rebuild tree
-            new_el = '({0},{1})'.format(g_tree[c_from], g_tree[c_to])
-            g_tree[c_to] = new_el
-            g_tree.pop(c_from)
+            new_el = (self.g_tree[c_from], self.g_tree[c_to])
+            self.g_tree[c_to] = new_el
+            self.g_tree.pop(c_from)
 
-            print g_tree
+            d_m = np.delete(d_m, (c_from), axis = 0)
+            d_m = np.delete(d_m, (c_from), axis = 1)
+            d_m[c_to] = 0
 
 
     def hamming_distance(self, s1, s2):
@@ -75,6 +78,7 @@ class Msa:
     def distance(self, i, j):
         # group average & hamming distance
 
+        print 'distance of: {0} {1}'.format(i, j)
         ti = self.g_tree[i]
         tj = self.g_tree[j]
 
@@ -89,9 +93,11 @@ class Msa:
             for l in range(nj):
                 s2 = self.sequences[mj[l]]
                 a = Alignment([s1, s2])
+                print 'align'
                 a.align()
+                print 'output'
                 as1, as2 = a.output()
-
+                print 'hamming distance'
                 d += self.hamming_distance(as1, as2)
 
         return d/(ni*nj)
