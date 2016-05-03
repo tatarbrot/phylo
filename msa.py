@@ -2,27 +2,40 @@
 
 from alignment import *
 import numpy as np
+import re
 
 class Msa:
     def __init__(self, sequences, names = []):
         self.sequences = sequences
         self.names = names
 
-        self.g_tree = np.array([])
+        self.nodes = []
+        self.clusters = []
+
+        # adjacency matrix
+        # indexes with no sequence in self.sequences are
+        # nodes inside the tree
+        seq_len = len(sequences)
+        self.adjacency_matrix = np.zeros([seq_len, seq_len])
 
     def align(self):
         # create guid tree
         self.build_guide_tree()
 
+
     def build_guide_tree(self):
 
-        self.g_tree = range(len(sequences))
-        d_m = np.zeros([len(self.g_tree), len(self.g_tree)])
-        while len(self.g_tree) > 1:
+        seq_len = len(self.sequences)
+
+        self.nodes = range(seq_len)
+        self.clusters = range(seq_len)
+
+        d_m = np.zeros([seq_len, seq_len])
+        while len(self.clusters) > 1:
             for i in range(d_m.shape[0]):
                 for j in range(i):
                     if d_m[i][j] == 0:
-                        d_m[i][j] = self.distance(i,j)
+                        d_m[i][j] = self.average_sequence_distance(i,j)
 
 
             # find minimums
@@ -33,8 +46,6 @@ class Msa:
             min_dist = min(minimas)
             min_idx = np.where(d_m == min_dist)
 
-            min_idx[0][0], min_idx[1][0]
-
             if min_idx[0][0] < min_idx[1][0]:
                 c_from = min_idx[1][0]
                 c_to = min_idx[0][0]
@@ -42,45 +53,61 @@ class Msa:
                 c_from = min_idx[0][0]
                 c_to = min_idx[1][0]
 
-            # rebuild tree
-            new_el = (self.g_tree[c_from], self.g_tree[c_to])
-            self.g_tree[c_to] = new_el
-            self.g_tree.pop(c_from)
+            # create new node
+            self.nodes.append(len(self.nodes))
+
+            # expand adjacency matrix
+            adjacency_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
+            self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=0)
+
+            adjacency_entry = np.zeros([self.adjacency_matrix.shape[0], 1])
+            self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=1)
+
+            # set adjacencies
+            self.adjacency_matrix[-1][c_from] = min_dist/2
+            self.adjacency_matrix[-1][c_to] = min_dist/2
+
+            self.adjacency_matrix[c_from][-1] = min_dist/2
+            self.adjacency_matrix[c_to][-1] = min_dist/2
+
+            self.clusters[c_to] = self.nodes[-1]
+            self.clusters.pop(c_from)
 
             d_m = np.delete(d_m, (c_from), axis = 0)
             d_m = np.delete(d_m, (c_from), axis = 1)
             d_m[c_to] = 0
 
 
-    def hamming_distance(self, s1, s2):
+    def hamming_distance(self, s0, s1):
         d = 0
-        l = len(s1)
+        l = len(s0)
         for i in range(l):
-            if s1[i] != s2[i]:
+            if s0[i] != s1[i]:
                 d += 1
 
-        return d
+        return float(d)/l
 
     def tree_members(self, ti):
-        if type(ti) == type(1):
-            return [ti]
-        else:
-            m = []
-            for i in range(len(ti)):
-                if type(ti[i]) == type(1):
-                    m.append(ti[i])
+        if ti >= len(self.sequences):
+            # get neighbors
+            adj = self.adjacency_matrix[ti][:]
+            mem = np.where(adj > 0)
+            members = []
+            for m in mem[0]:
+                if m < len(self.sequences):
+                    members.append(m)
                 else:
-                    other_m = self.tree_members(ti[i])
-                    m.extend(other_m)
+                    members.extend(self.tree_members(m))
+        else:
+            members = [ti]
 
-            return m
+        return members
 
-    def distance(self, i, j):
+    def average_sequence_distance(self, i, j):
         # group average & hamming distance
 
-        print 'distance of: {0} {1}'.format(i, j)
-        ti = self.g_tree[i]
-        tj = self.g_tree[j]
+        ti = self.clusters[i]
+        tj = self.clusters[j]
 
         mi = self.tree_members(ti)
         mj = self.tree_members(tj)
@@ -92,13 +119,11 @@ class Msa:
             s1 = self.sequences[mi[k]]
             for l in range(nj):
                 s2 = self.sequences[mj[l]]
-                a = Alignment([s1, s2])
-                print 'align'
+                a = Alignment([[s1], [s2]])
                 a.align()
-                print 'output'
-                as1, as2 = a.output()
-                print 'hamming distance'
-                d += self.hamming_distance(as1, as2)
+                aligned_sequences = a.output()
+                d += self.hamming_distance(aligned_sequences[0][0], \
+                        aligned_sequences[1][0])
 
         return d/(ni*nj)
 
@@ -120,6 +145,17 @@ hylobates = 'AGCTTTACAGGTGCAACCGTCCTCATAATCGCCCACGGACTAACCTCTTCCCTGCTATTCTGCCTTG
 sequences = [tarsius, lemur, homo, pan, gorilla, pongo, hylobates]
 names = ['Tarsius syrichta','Lemur catta','Homo sapiens', \
         'Pan','Gorilla','Pongo','Hylobates']
+thermotoga = 'ATGGCGAAGGAAAAATTTGTGAGAACAAAACCGCATGTTAACGTTGGAAC'
+thermophi = 'ATGGCGAAGGGCGAGTTTGTTCGGACGAAGCCTCACGTGAACGTGGGGAC'
+aquaticus = 'ATGGCGAAGGGCGAGTTTATCCGGACGAAGCCCCACGTGAACGTGGGGAC'
+deinonema = 'ATGGCTAAGGGAACGTTTGAACGCACCAAACCCCACGTGAACGTGGGCAC'
+chlamydia = 'ATGTCAAAAGAAACTTTTCAACGTAATAAGCCTCATATCAACATAGGGGC'
+flexistips = 'ATGTCCAAGCAAAAGTACGAAAGGAAGAAACCTCACGTAAACGTAGGCAC'
+borrelia = 'ATGGCAAAAGAAGTTTTTCAAAGAACAAAGCCGCACATGAATGTTGGAAC'
+sequences = [thermotoga, thermophi, aquaticus, deinonema, chlamydia, \
+        flexistips, borrelia]
+names = ['thermotoga', 'thermophi', 'aquaticus', 'deinonema', 'chlamydia', \
+        'flexistips', 'borrelia']
 
 m = Msa(sequences, names)
 m.align()

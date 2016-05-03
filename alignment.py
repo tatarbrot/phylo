@@ -3,27 +3,44 @@
 import numpy as np
 
 class Alignment:
-    def __init__(self, sequences, delta = -2, tp = 'dna'):
+    def __init__(self, sequences, weights = [], delta = -2, tp = 'dna'):
         # cost for indel
         self.delta = delta
 
+        if len(weights) < 1:
+            # equal weights
+            self.weights = [[1 for _ in range(len(sequences[0]))] \
+                    for _ in range(2)]
+        else:
+            self.weights = weights
+
+        self.weights = np.array(self.weights)
+        # normalize weights
+        for i in range(len(self.weights)):
+            self.weights[i] = np.true_divide(self.weights[i], \
+                    np.sum(self.weights[i]))
+
+
+        self.sequences = sequences
         self.tp = tp
 
-        self.dna_scores = np.array([\
-                ['.', 'a', 't', 'g', 'c', '.'], \
-                ['a', 1., -1., -0.5, -1., 0], \
-                ['c', -1., 1., -1., -0.5, 0], \
-                ['t', -0.5, -1., 1., -1., 0], \
-                ['g', -1., -0.5, -1., 1., 0], \
-                ['.', 0, 0, 0, 0, 0], \
-                ])
+        if self.tp == 'dna':
+            self.scoring_table = np.array([\
+                    ['.', 'a', 't', 'g', 'c', '.'], \
+                    ['a', 1., -1., -0.5, -1., 0], \
+                    ['c', -1., 1., -1., -0.5, 0], \
+                    ['t', -0.5, -1., 1., -1., 0], \
+                    ['g', -1., -0.5, -1., 1., 0], \
+                    ['.', 0, 0, 0, 0, 0], \
+                    ])
 
-        self.sequences = ['' for _ in range(len(sequences))]
+        self.sequences = [['' for _ in range(len(sequences[i]))] for i in range(2)]
         for i in range(len(sequences)):
-            self.sequences[i] = '-{0}'.format(sequences[i])
+            for j in range(len(sequences[i])):
+                self.sequences[i][j] = '-{0}'.format(sequences[i][j])
 
 
-        self.alignment_matrix = np.zeros([len(seq) for \
+        self.alignment_matrix = np.zeros([len(seq[0]) for \
                 seq in self.sequences])
 
 
@@ -38,12 +55,12 @@ class Alignment:
             self.alignment_matrix[0][c] = c*self.delta
 
 
-    def score(self, row, col):
-        r = np.where(self.dna_scores[:][0] == self.sequences[0][row].lower())
-        c = np.where(self.dna_scores[0][:] == self.sequences[1][col].lower())
+    def score(self, row, col, s0 = 0, s1 = 0):
+        r = np.where(self.scoring_table[:][0] == self.sequences[0][s0][row].lower())
+        c = np.where(self.scoring_table[0][:] == self.sequences[1][s1][col].lower())
 
         if len(r[0]) > 0 and len(c[0] > 0):
-            return float(self.dna_scores[r[0][0]][c[0][0]])
+            return float(self.scoring_table[r[0][0]][c[0][0]])
         else:
             # neutral score
             return 0.0
@@ -51,7 +68,16 @@ class Alignment:
     def score_cell(self, r, c):
         scores = []
         pos = []
-        scores.append(self.alignment_matrix[r-1][c-1] + self.score(r,c))
+
+        l0 = len(self.sequences[0])
+        l1 = len(self.sequences[1])
+        match_score = 0
+        for i in range(l0):
+            for j in range(l1):
+                match_score = self.score(r,c,i,j)*self.weights[i][j]
+
+
+        scores.append(self.alignment_matrix[r-1][c-1] + match_score/float(l0*l1))
         pos.append((r-1,c-1))
 
         scores.append(self.alignment_matrix[r][c-1] + self.delta)
@@ -101,23 +127,36 @@ class Alignment:
         s2 = ''
         score = 0
 
+        l0 = len(self.sequences[0])
+        l1 = len(self.sequences[1])
+
+        s0 = ['' for _ in range(l0)]
+        s1 = ['' for _ in range(l1)]
+
         while (r,c) != (0,0):
             p = self.route[r][c]
             score += self.alignment_matrix[r][c]
+
             if p[0] == r-1 and p[1] == c-1:
-                s1 = '{0}{1}'.format(self.sequences[0][r], s1)
-                s2 = '{0}{1}'.format(self.sequences[1][c], s2)
+                for i in range(l0):
+                    s0[i] = '{0}{1}'.format(self.sequences[0][i][r], s0[i])
+                for j in range(l1):
+                    s1[j] = '{0}{1}'.format(self.sequences[1][j][c], s1[j])
             elif p[0] == r and p[1] == c-1:
-                s1 = '.{0}'.format(s1)
-                s2 = '{0}{1}'.format(self.sequences[1][c], s2)
+                for i in range(l0):
+                    s0[i] = '.{0}'.format(s0[i])
+                for j in range(l1):
+                    s1[j] = '{0}{1}'.format(self.sequences[1][j][c], s1[j])
             elif p[0] == r-1 and p[1] == c:
-                s1 = '{0}{1}'.format(self.sequences[0][r], s1)
-                s2 = '.{0}'.format(s2)
+                for i in range(l0):
+                    s0[i] = '{0}{1}'.format(self.sequences[0][i][r], s0[i])
+                for j in range(l1):
+                    s1[j] = '.{0}'.format(s1[j])
 
             r = p[0]
             c = p[1]
 
-        return [s1, s2]
+        return [s0, s1]
 
     def count_score_from(self, r, c):
         if r == 0 and c == 0:
