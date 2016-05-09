@@ -279,14 +279,24 @@ sequences = [tarsius, lemur, homo, pan, gorilla, pongo, hylobates]
 names = ['Tarsius syrichta','Lemur catta','Homo sapiens', \
         'Pan','Gorilla','Pongo','Hylobates']
 thermotoga = 'ATGGCGAAGGAAAAATTTGTGAGAACAAAACCGCATGTTAACGTTGGAAC'
-thermophi = 'ATGGCGAAGGGCGAGTTTGTTCGGACGAAGCCTCACGTGAACGTGGGGAC'
-aquaticus = 'ATGGCGAAGGGCGAGTTTATCCGGACGAAGCCCCACGTGAACGTGGGGAC'
-deinonema = 'ATGGCTAAGGGAACGTTTGAACGCACCAAACCCCACGTGAACGTGGGCAC'
-chlamydia = 'ATGTCAAAAGAAACTTTTCAACGTAATAAGCCTCATATCAACATAGGGGC'
+thermophi =  'ATGGCGAAGGGCGAGTTTGTTCGGACGAAGCCTCACGTGAACGTGGGGAC'
+aquaticus =  'ATGGCGAAGGGCGAGTTTATCCGGACGAAGCCCCACGTGAACGTGGGGAC'
+deinonema =  'ATGGCTAAGGGAACGTTTGAACGCACCAAACCCCACGTGAACGTGGGCAC'
+chlamydia =  'ATGTCAAAAGAAACTTTTCAACGTAATAAGCCTCATATCAACATAGGGGC'
 flexistips = 'ATGTCCAAGCAAAAGTACGAAAGGAAGAAACCTCACGTAAACGTAGGCAC'
-borrelia = 'ATGGCAAAAGAAGTTTTTCAAAGAACAAAGCCGCACATGAATGTTGGAAC'
+borrelia =   'ATGGCAAAAGAAGTTTTTCAAAGAACAAAGCCGCACATGAATGTTGGAAC'
 sequences = [thermotoga, thermophi, aquaticus, deinonema, chlamydia, \
         flexistips, borrelia]
+names = ['thermotoga', 'thermophi', 'aquaticus', 'deinonema', 'chlamydia', \
+        'flexistips', 'borrelia']
+
+sequences = [\
+        'AACGTGATTGAC', \
+        'TCGAGTGCTTTACAGT', \
+        'GCCGTGCTAGTCG', \
+        'TTCAGTGGACGTGGTA', \
+        'GGTGCAGACC' \
+        ]
 names = ['thermotoga', 'thermophi', 'aquaticus', 'deinonema', 'chlamydia', \
         'flexistips', 'borrelia']
 
