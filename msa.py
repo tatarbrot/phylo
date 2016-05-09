@@ -23,8 +23,25 @@ class Msa:
     def align(self):
         # create guid tree
         self.build_guide_tree()
+
         # root tree
         self.root_tree()
+
+        if self.root_node != -1:
+            # continue, finally align sequences
+            self.align_sequences(self.root_node, [])
+        else:
+            print 'could root tree'
+
+    def align_sequences(self, node, ignore):
+        # get neighbor_nodes
+        search_in
+
+    def get_neighbor_nodes(self, node):
+        search_in = self.adjacency_matrix[start][:]
+        neighbors = np.where(search_in > 0)
+
+        return neighbors[0]
 
     def expand_adjacency_matrix(self):
         # expand adjacency matrix
@@ -78,19 +95,28 @@ class Msa:
 
             idx += 1
 
-        start_dist = dist -
+        # remove distances
+        self.adjacency_matrix[start_node][stop_node] = 0
+        self.adjacency_matrix[stop_node][start_node] = 0
 
+        # set distances to root_node
+        stop_dist = abs(mid-stop_dist)
+        start_dist = abs(mid-start_dist)
+
+        self.adjacency_matrix[stop_node][self.root_node] = stop_dist
+        self.adjacency_matrix[self.root_node][stop_node] = stop_dist
+
+        self.adjacency_matrix[start_node][self.root_node] = start_dist
+        self.adjacency_matrix[self.root_node][start_node] = start_dist
 
     def node_distance(self, start, ignore, add, route):
         seq_len = len(self.sequences)
         distances = np.zeros([seq_len])
 
-        search_in = self.adjacency_matrix[start][:]
-        neighbors = np.where(search_in > 0)
-
+        nb = self.get_neighbor_nodes(start)
 
         ignore.append(start)
-        for n in neighbors[0]:
+        for n in nb:
             if not n in ignore:
                 if n < len(self.sequences):
                     distances[n] += add + self.adjacency_matrix[start][n]
@@ -166,11 +192,10 @@ class Msa:
     def tree_members(self, ti, ignore):
         if ti >= len(self.sequences):
             # get neighbors
-            adj = self.adjacency_matrix[ti][:]
-            mem = np.where(adj > 0)
+            mem = self.get_neighbor_nodes(ti)
             members = []
             ignore.append(ti)
-            for m in mem[0]:
+            for m in mem:
                 if not m in ignore:
                     if m < len(self.sequences):
                         members.append(m)
