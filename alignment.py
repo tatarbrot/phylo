@@ -9,8 +9,8 @@ class Alignment:
 
         if len(weights) < 1:
             # equal weights
-            self.weights = [[1 for _ in range(len(sequences[0]))] \
-                    for _ in range(2)]
+            self.weights = [[1 for _ in range(len(sequences[i]))] \
+                    for i in range(2)]
         else:
             self.weights = weights
 
@@ -19,7 +19,6 @@ class Alignment:
         for i in range(len(self.weights)):
             self.weights[i] = np.true_divide(self.weights[i], \
                     np.sum(self.weights[i]))
-
 
         self.sequences = sequences
         self.tp = tp
@@ -72,12 +71,16 @@ class Alignment:
         l0 = len(self.sequences[0])
         l1 = len(self.sequences[1])
         match_score = 0
+
+        match_scores = np.zeros(l1*l0)
         for i in range(l0):
             for j in range(l1):
-                match_score = self.score(r,c,i,j)*self.weights[i][j]
+                match_scores[j+i*l1] = \
+                        self.score(r,c,i,j)*self.weights[0][i]*self.weights[1][j]
 
+        match_score = np.mean(match_scores)
 
-        scores.append(self.alignment_matrix[r-1][c-1] + match_score/float(l0*l1))
+        scores.append(self.alignment_matrix[r-1][c-1] + match_score)
         pos.append((r-1,c-1))
 
         scores.append(self.alignment_matrix[r][c-1] + self.delta)

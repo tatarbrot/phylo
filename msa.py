@@ -28,17 +28,47 @@ class Msa:
         self.root_tree()
 
         if self.root_node != -1:
+            print "start with msa"
             # continue, finally align sequences
-            self.align_sequences(self.root_node, [])
+            seq = self.align_sequences(self.root_node, [])
+
+            for s in seq:
+                print s
         else:
-            print 'could root tree'
+            print 'could not root tree'
 
     def align_sequences(self, node, ignore):
         # get neighbour_nodes
-        search_in
+        neighbours = self.get_neighbour_nodes(node)
+        ignore.append(node)
+        all_seq_len = len(self.sequences)
+        tree_nodes = [n < all_seq_len for n in neighbours]
+
+        align_seq = []
+        for n in neighbours:
+            if not n in ignore:
+                if n < all_seq_len:
+                    align_seq.append([self.sequences[n]])
+                else:
+                    align_seq.append(self.align_sequences(n, ignore))
+
+        seq = []
+        if len(align_seq) > 2:
+            print 'unexpected number (>2) of sequences to align'
+        elif len(align_seq) == 1:
+            return align_seq[0]
+        else:
+            a = Alignment(align_seq)
+            a.align()
+            aligned_sequences = a.output()
+            for i in range(len(aligned_sequences)):
+                for j in range(len(aligned_sequences[i])):
+                    seq.append(aligned_sequences[i][j])
+            return seq
+
 
     def get_neighbour_nodes(self, node):
-        search_in = self.adjacency_matrix[start][:]
+        search_in = self.adjacency_matrix[node][:]
         neighbours = np.where(search_in > 0)
 
         return neighbours[0]
