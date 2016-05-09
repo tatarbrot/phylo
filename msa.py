@@ -34,14 +34,14 @@ class Msa:
             print 'could root tree'
 
     def align_sequences(self, node, ignore):
-        # get neighbor_nodes
+        # get neighbour_nodes
         search_in
 
-    def get_neighbor_nodes(self, node):
+    def get_neighbour_nodes(self, node):
         search_in = self.adjacency_matrix[start][:]
-        neighbors = np.where(search_in > 0)
+        neighbours = np.where(search_in > 0)
 
-        return neighbors[0]
+        return neighbours[0]
 
     def expand_adjacency_matrix(self):
         # expand adjacency matrix
@@ -113,7 +113,7 @@ class Msa:
         seq_len = len(self.sequences)
         distances = np.zeros([seq_len])
 
-        nb = self.get_neighbor_nodes(start)
+        nb = self.get_neighbour_nodes(start)
 
         ignore.append(start)
         for n in nb:
@@ -191,8 +191,8 @@ class Msa:
 
     def tree_members(self, ti, ignore):
         if ti >= len(self.sequences):
-            # get neighbors
-            mem = self.get_neighbor_nodes(ti)
+            # get neighbours
+            mem = self.get_neighbour_nodes(ti)
             members = []
             ignore.append(ti)
             for m in mem:
