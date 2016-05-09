@@ -18,11 +18,21 @@ class Msa:
         seq_len = len(sequences)
         self.adjacency_matrix = np.zeros([seq_len, seq_len])
 
+        self.root_node = -1
+
     def align(self):
         # create guid tree
         self.build_guide_tree()
         # root tree
         self.root_tree()
+
+    def expand_adjacency_matrix(self):
+        # expand adjacency matrix
+        adjacency_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
+        self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=0)
+
+        adjacency_entry = np.zeros([self.adjacency_matrix.shape[0], 1])
+        self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=1)
 
     def root_tree(self):
         seq_len = len(self.sequences)
@@ -44,20 +54,31 @@ class Msa:
             else:
                 i += 1
 
+        # add root_node
+        self.nodes.append(len(self.nodes))
+        self.root_node = self.nodes[-1]
+
+        self.expand_adjacency_matrix()
+
         mid = m/2
-        root_node = -1
+        start_node = -1
+        stop_node = -1
         idx = 0
-        dist = 0
-        while root_node < 0 and idx < len(root_route):
+        stop_dist = 0
+        start_dist = 0
+        while start_node < 0 and idx < len(root_route):
             start = root_route[idx]
             stop = root_route[idx+1]
-            dist += self.adjacency_matrix[start][stop]
-            if dist > mid:
-                root_node = start
+            stop_dist += self.adjacency_matrix[start][stop]
+            if stop_dist > mid:
+                start_node = start
+                stop_node = stop
+            else:
+                start_dist = stop_dist
 
             idx += 1
 
-        print root_node
+        start_dist = dist -
 
 
     def node_distance(self, start, ignore, add, route):
@@ -116,13 +137,7 @@ class Msa:
             # create new node
             self.nodes.append(len(self.nodes))
 
-            # expand adjacency matrix
-            adjacency_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
-            self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=0)
-
-            adjacency_entry = np.zeros([self.adjacency_matrix.shape[0], 1])
-            self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=1)
-
+            self.expand_adjacency_matrix()
 
             # set adjacencies
             self.adjacency_matrix[-1][self.clusters[c_from]] = min_dist/2
