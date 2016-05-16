@@ -2,8 +2,6 @@
 
 from alignment import *
 import numpy as np
-import re
-from Bio import Entrez, SeqIO
 
 class Msa:
     def __init__(self, sequences, names = []):
@@ -18,6 +16,8 @@ class Msa:
         # nodes inside the tree
         seq_len = len(sequences)
         self.adjacency_matrix = np.zeros([seq_len, seq_len])
+        # not neighbors
+        self.adjacency_matrix[:][:] = np.inf
 
         self.root_node = -1
 
@@ -29,14 +29,18 @@ class Msa:
         self.root_tree()
 
         if self.root_node != -1:
-            print "start with msa"
+            print("start with msa")
             # continue, finally align sequences
             seq = self.align_sequences(self.root_node, [])
 
+            sequences = []
+            names = []
             for s in seq:
-                print s
+                sequences.append(s[0])
+                names.append(self.names[s[1]])
+            return sequences, names
         else:
-            print 'could not root tree'
+            print('could not root tree')
 
     def align_sequences(self, node, ignore):
         # get neighbour_nodes
@@ -49,37 +53,40 @@ class Msa:
         for n in neighbours:
             if not n in ignore:
                 if n < all_seq_len:
-                    align_seq.append([self.sequences[n]])
+                    align_seq.append([(self.sequences[n], n)])
                 else:
                     align_seq.append(self.align_sequences(n, ignore))
 
         seq = []
         if len(align_seq) > 2:
-            print 'unexpected number (>2) of sequences to align'
+            print('unexpected number (>2) of sequences to align')
         elif len(align_seq) == 1:
             return align_seq[0]
         else:
-            a = Alignment(align_seq)
+            aseq = [[s[0] for s in c] for c in align_seq]
+            a = Alignment(aseq)
             a.align()
             aligned_sequences = a.output()
             for i in range(len(aligned_sequences)):
                 for j in range(len(aligned_sequences[i])):
-                    seq.append(aligned_sequences[i][j])
+                    seq.append((aligned_sequences[i][j], align_seq[i][j][1]))
             return seq
 
 
     def get_neighbour_nodes(self, node):
         search_in = self.adjacency_matrix[node][:]
-        neighbours = np.where(search_in > 0)
+        neighbours = np.where(search_in < np.inf)
 
         return neighbours[0]
 
     def expand_adjacency_matrix(self):
         # expand adjacency matrix
         adjacency_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
+        adjacency_entry[:] = np.inf
         self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=0)
 
         adjacency_entry = np.zeros([self.adjacency_matrix.shape[0], 1])
+        adjacency_entry[:] = np.inf
         self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adjacency_entry), axis=1)
 
     def root_tree(self):
@@ -127,8 +134,8 @@ class Msa:
             idx += 1
 
         # remove distances
-        self.adjacency_matrix[start_node][stop_node] = 0
-        self.adjacency_matrix[stop_node][start_node] = 0
+        self.adjacency_matrix[start_node][stop_node] = np.inf
+        self.adjacency_matrix[stop_node][start_node] = np.inf
 
         # set distances to root_node
         stop_dist = abs(mid-stop_dist)
@@ -165,14 +172,16 @@ class Msa:
 
         seq_len = len(self.sequences)
 
-        self.nodes = range(seq_len)
-        self.clusters = range(seq_len)
+        self.nodes = list(range(seq_len))
+        self.clusters = list(range(seq_len))
 
         d_m = np.zeros([seq_len, seq_len])
+        d_m[:][:] = np.inf
+
         while len(self.clusters) > 1:
             for i in range(d_m.shape[0]):
                 for j in range(i):
-                    if d_m[i][j] == 0:
+                    if d_m[i][j] == np.inf:
                         d_m[i][j] = self.average_sequence_distance(i,j)
 
 
@@ -193,7 +202,6 @@ class Msa:
 
             # create new node
             self.nodes.append(len(self.nodes))
-
             self.expand_adjacency_matrix()
 
             # set adjacencies
@@ -208,7 +216,7 @@ class Msa:
 
             d_m = np.delete(d_m, (c_from), axis = 0)
             d_m = np.delete(d_m, (c_from), axis = 1)
-            d_m[c_to] = 0
+            d_m[c_to] = np.inf
 
 
     def hamming_distance(self, s0, s1):
@@ -217,7 +225,6 @@ class Msa:
         for i in range(l):
             if s0[i] != s1[i]:
                 d += 1
-
         return float(d)/l
 
     def tree_members(self, ti, ignore):
@@ -260,30 +267,3 @@ class Msa:
                         aligned_sequences[1][0])
 
         return d/(ni*nj)
-
-# data from appendix S1 from Maguilla et al. 2015
-individuals = [
-        {'name': 'C. arenaria', 'matK': 'KP980114'},
-        {'name': 'C. bromoides Willd.', 'matK': 'KP980015'},
-        {'name': 'C. deweyana Schwein.', 'matK': 'KP980016'},
-        {'name': 'C. leptopoda Mack.', 'matK': 'KP980068'},
-        {'name': 'C. disperma Dewey', 'matK': 'KP980093'}
-        ]
-
-Entrez.email = 'tobias.moser@gmx.ch'
-seq_list = []
-name_list = []
-for i in individuals:
-    print i['name'], i['matK']
-    h = Entrez.efetch(db='nucleotide', id=i['matK'], \
-            rettype='fasta', strand=1)
-    record = SeqIO.read(h, 'fasta')
-    h.close()
-    seq_list.append(record.seq)
-    name_list.append(i['name'])
-
-print seq_list
-print name_list
-
-m = Msa(seq_list, name_list)
-m.align()
