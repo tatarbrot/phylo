@@ -10,6 +10,28 @@ class Tree:
         self.sequences = sequences
         self.names = names
 
+        lengths = [len(l) for l in self.sequences]
+        lengths = np.diff(lengths)
+
+        if any(lengths):
+            print('sequences must have same lengths!')
+            self.sequences = []
+
+    def infer_tree(self):
+        # neighbour joining method
+        seq_len = len(self.sequences)
+
+        # start with star topology
+        dm = np.zeros([seq_len + 1, seq_len + 1])
+        dm[:][:] = np.inf
+
+        dm[:, dm.shape[1]-1] = 0
+        dm[dm.shape[0]-1, :] = 0
+
+        print(dm)
+
+
+
 
 # data from appendix S1 from Maguilla et al. 2015
 individuals = [
@@ -22,7 +44,6 @@ individuals = [
         {'name': 'C. arcta', 'matK': 'KP980047', 'its': 'KP980417'},
         {'name': 'C. arctiformis', 'matK': 'KP980004', 'its': 'KP980375'},
         {'name': 'C. bonanzensis', 'matK': 'KP980038', 'its': 'KP980408'},
-
         ]
 
 Entrez.email = 'tobias.moser@gmx.ch'
@@ -41,4 +62,5 @@ for i in individuals:
 m = Msa(seq_list, name_list)
 sequences, names = m.align()
 
-print(sequences, names)
+t = Tree(sequences, names)
+t.infer_tree()
