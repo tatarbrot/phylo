@@ -29,7 +29,7 @@ class Tree:
         self.nodes.append(len(self.nodes))
         self.clusters = self.nodes[:]
 
-        node_len = len(self.nodes)
+        nodes_len = len(self.nodes)
 
         d_m = np.zeros([seq_len, seq_len])
         d_m[:,:] = np.inf
@@ -39,6 +39,8 @@ class Tree:
         self.adjacency_matrix[:,:] = np.inf
         self.adjacency_matrix[:,self.adjacency_matrix.shape[1]-1] = 0
         self.adjacency_matrix[self.adjacency_matrix.shape[0]-1, :] = 0
+        self.adjacency_matrix[self.adjacency_matrix.shape[0]-1, \
+                self.adjacency_matrix.shape[1]-1] = np.inf
 
         nd = self.nodes[-1]
         child_nodes = np.where(self.adjacency_matrix[nd,:] != np.inf)
@@ -46,21 +48,22 @@ class Tree:
         # calculate distances
         for child_node in child_nodes[0]:
             for dist_node in child_nodes[0]:
-                if dist_node != child_node and \
-                        d_m[child_node,dist_node] == np.inf:
-                    d = self.sequence_distance(child_node, dist_node)
-                    d_m[child_node,dist_node] = d
-                    d_m[dist_node,child_node] = d
+                if dist_node != child_node:
+                    if d_m[child_node,dist_node] == np.inf:
+                        d = self.sequence_distance(child_node, dist_node)
+                        d_m[child_node,dist_node] = d
+                        d_m[dist_node,child_node] = d
+                else:
+                    d_m[child_node,dist_node] = 0
 
 
-        while len(self.clusters) > 1:
+        while d_m.shape[0] > 1:
             # calculate q matrix
             qm = np.zeros(d_m.shape)
             for i in range(qm.shape[0]):
-                for j in range(qm.shape[1]-i):
+                for j in range(i):
                     qm[i,j] = (seq_len-2)*d_m[i,j] - sum(d_m[i,:]) -sum(d_m[:,j])
                     qm[j,i] = qm[i,j]
-
 
             # find smallest q value
             minq = np.amin(qm)
@@ -69,14 +72,14 @@ class Tree:
             minj = minq[1][0]
 
             diu = 0.5*d_m[mini,minj] + 1/(2*(seq_len-2))*(sum(d_m[:,minj]) - sum(d_m[mini,:]))
-            dju = dm[mini,minj] - diu
+            dju = d_m[mini,minj] - diu
 
             # create new node
             self.nodes.append(len(self.nodes))
-            u = nodes[-1]
+            u = self.nodes[-1]
 
             # update adjacencies
-            self.expand_ajacency_matrix()
+            self.expand_adjacency_matrix()
             self.adjacency_matrix[u,nd] = 0
             self.adjacency_matrix[nd,u] = 0
 
@@ -99,8 +102,8 @@ class Tree:
                 n_from = mini
                 n_to = minj
 
-            clusters.pop(n_from)
-            clusters[n_to] = u
+            self.clusters.pop(n_from)
+            self.clusters[n_to] = u
 
             # update distance matrix
             new_dm = np.delete(d_m, n_from, axis=1)
@@ -116,8 +119,6 @@ class Tree:
                     new_dm[n_to, i] = new_dm[i, n_to]
 
             d_m = new_dm
-
-        print(self.adjacency_matrix)
 
     def expand_adjacency_matrix(self):
         adj_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
@@ -136,6 +137,8 @@ class Tree:
         a.align()
         aligned_sequences = a.output()
         d = self.jaccard_distance(aligned_sequences[0][0], aligned_sequences[1][0])
+
+        return d
 
     def jaccard_distance(self, s1, s2):
         d = 0

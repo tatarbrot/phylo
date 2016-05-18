@@ -246,7 +246,6 @@ class Msa:
 
     def average_sequence_distance(self, i, j):
         # group average & jaccard distance
-
         ti = self.clusters[i]
         tj = self.clusters[j]
 
