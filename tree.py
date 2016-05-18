@@ -8,28 +8,128 @@ import numpy as np
 class Tree:
     def __init__(self, sequences, names):
         self.sequences = sequences
-        self.names = names
+        self.nodes = self.sequences[:]
 
+        self.names = names
         lengths = [len(l) for l in self.sequences]
         lengths = np.diff(lengths)
+
+        self.adjacency_matrix = []
 
         if any(lengths):
             print('sequences must have same lengths!')
             self.sequences = []
+
 
     def infer_tree(self):
         # neighbour joining method
         seq_len = len(self.sequences)
 
         # start with star topology
-        dm = np.zeros([seq_len + 1, seq_len + 1])
-        dm[:][:] = np.inf
+        self.nodes.append(len(self.nodes))
+        self.clusters = self.nodes[:]
 
-        dm[:, dm.shape[1]-1] = 0
-        dm[dm.shape[0]-1, :] = 0
+        node_len = len(self.nodes)
+
+        d_m = np.zeros([seq_len, seq_len])
+        d_m[:,:] = np.inf
+
+        self.adjacency_matrix = np.zeros([nodes_len, nodes_len])
+
+        self.adjacency_matrix[:,:] = np.inf
+        self.adjacency_matrix[:,self.adjacency_matrix.shape[1]-1] = 0
+        self.adjacency_matrix[self.adjacency_matrix.shape[0]-1, :] = 0
+
+        nd = self.nodes[-1]
+        child_nodes = np.where(self.adjacency_matrix[nd,:] != np.inf)
+
+        # calculate distances
+        for child_node in child_nodes[0]:
+            for dist_node in child_nodes[0]:
+                if dist_node != child_node and \
+                        d_m[child_node,dist_node] == np.inf:
+                    d = self.sequence_distance(child_node, dist_node)
+                    d_m[child_node,dist_node] = d
+                    d_m[dist_node,child_node] = d
+
+
+        while len(self.clusters) > 1:
+            # calculate q matrix
+            qm = np.zeros(d_m.shape)
+            for i in range(qm.shape[0]):
+                for j in range(qm.shape[1]-i):
+                    qm[i,j] = (seq_len-2)*d_m[i,j] - sum(d_m[i,:]) -sum(d_m[:,j])
+                    qm[j,i] = qm[i,j]
+
+
+            # find smallest q value
+            minq = np.amin(qm)
+            minq = np.where(qm == minq)
+            mini = minq[0][0]
+            minj = minq[1][0]
+
+            diu = 0.5*d_m[mini,minj] + 1/(2*(seq_len-2))*(sum(d_m[:,minj]) - sum(d_m[mini,:]))
+            dju = dm[mini,minj] - diu
+
+            # create new node
+            self.nodes.append(len(self.nodes))
+            u = nodes[-1]
+
+            # update adjacencies
+            self.expand_ajacency_matrix()
+            self.adjacency_matrix[u,nd] = 0
+            self.adjacency_matrix[nd,u] = 0
+
+            self.adjacency_matrix[u,mini] = diu
+            self.adjacency_matrix[mini,u] = diu
+            self.adjacency_matrix[minj,u] = dju
+            self.adjacency_matrix[u,minj] = dju
+
+            # remove old ajdacencies
+            self.adjacency_matrix[nd,mini] = np.inf
+            self.adjacency_matrix[mini,nd] = np.inf
+            self.adjacency_matrix[nd,minj] = np.inf
+            self.adjacency_matrix[minj,nd] = np.inf
+
+            # start clustering
+            if mini < minj:
+                n_from = minj
+                n_to = mini
+            else:
+                n_from = mini
+                n_to = minj
+
+            clusters.pop(n_from)
+            clusters[n_to] = u
+
+            # update distance matrix
+            new_dm = np.delete(d_m, n_from, axis=1)
+            new_dm = np.delete(new_dm, n_from, axis=0)
+            for i in range(new_dm.shape[0]):
+                if n_to != i:
+                    if n_to < i:
+                        idx = i+1
+                    else:
+                        idx = 1
+
+                    new_dm[i,n_to] = 0.5*(d_m[idx,mini]+d_m[idx,minj]-d_m[mini,minj])
+                    new_dm[n_to, i] = new_dm[i, n_to]
+
+            d_m = new_dm
 
         print(dm)
 
+    def expand_adjacency_matrix(self):
+        adj_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
+        adj_entry[:] = np.inf
+        self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adj_entry), axis=0)
+
+        adj_entry = np.zeros([self.adjacency_matrix.shape[0],1])
+        adj_entry[:] = np.inf
+        self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adj_entry), axis=1)
+
+    def sequence_distance(self, ni, nj):
+        pass
 
 
 
