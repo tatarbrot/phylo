@@ -117,7 +117,7 @@ class Tree:
 
             d_m = new_dm
 
-        print(dm)
+        print(self.adjacency_matrix)
 
     def expand_adjacency_matrix(self):
         adj_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
@@ -129,7 +129,22 @@ class Tree:
         self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adj_entry), axis=1)
 
     def sequence_distance(self, ni, nj):
-        pass
+        s1 = self.sequences[ni]
+        s2 = self.sequences[nj]
+
+        a = Alignment([[s1],[s2]])
+        a.align()
+        aligned_sequences = a.output()
+        d = self.jaccard_distance(aligned_sequences[0][0], aligned_sequences[1][0])
+
+    def jaccard_distance(self, s1, s2):
+        d = 0
+        l = len(s1)
+        for i in range(l):
+            if s1[i] != s2[i]:
+                d += 1
+
+        return d/l
 
 
 

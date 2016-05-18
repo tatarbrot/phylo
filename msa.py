@@ -219,7 +219,7 @@ class Msa:
             d_m[c_to] = np.inf
 
 
-    def hamming_distance(self, s0, s1):
+    def jaccard_distance(self, s0, s1):
         d = 0
         l = len(s0)
         for i in range(l):
@@ -245,7 +245,7 @@ class Msa:
         return members
 
     def average_sequence_distance(self, i, j):
-        # group average & hamming distance
+        # group average & jaccard distance
 
         ti = self.clusters[i]
         tj = self.clusters[j]
@@ -263,7 +263,7 @@ class Msa:
                 a = Alignment([[s1], [s2]])
                 a.align()
                 aligned_sequences = a.output()
-                d += self.hamming_distance(aligned_sequences[0][0], \
+                d += self.jaccard_distance(aligned_sequences[0][0], \
                         aligned_sequences[1][0])
 
         return d/(ni*nj)
