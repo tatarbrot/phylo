@@ -27,6 +27,7 @@ class Msa:
 
         # root tree
         self.root_tree()
+        print(self.adjacency_matrix)
 
         if self.root_node != -1:
             print("start with msa")
@@ -181,9 +182,13 @@ class Msa:
         while len(self.clusters) > 1:
             for i in range(d_m.shape[0]):
                 for j in range(i):
-                    if d_m[i][j] == np.inf:
-                        d_m[i][j] = self.average_sequence_distance(i,j)
+                    print('d_m[i,j]', d_m[i,j])
+                    if d_m[i,j] == np.inf:
+                        d_m[i,j] = self.average_sequence_distance(i,j)
+                        print(i,j,d_m[i,j])
 
+
+            print(d_m)
 
             # find minimums
             minimas = []
@@ -214,9 +219,21 @@ class Msa:
             self.clusters[c_to] = self.nodes[-1]
             self.clusters.pop(c_from)
 
-            d_m = np.delete(d_m, (c_from), axis = 0)
-            d_m = np.delete(d_m, (c_from), axis = 1)
-            d_m[c_to] = np.inf
+            new_d_m = np.delete(d_m, (c_from), axis = 0)
+            new_d_m = np.delete(new_d_m, (c_from), axis = 1)
+
+            for i in range(new_d_m.shape[0]):
+                    if i != c_to:
+                        if i >= c_from:
+                            idx = i+1
+                        else:
+                            idx = i
+                        new_d = (d_m[idx, c_to] + d_m[idx, c_from])/2
+                        new_d_m[i,j] = new_d
+                        print('new_d: ', new_d)
+
+            #d_m[c_to] = np.inf
+            d_m = new_d_m
 
 
     def jaccard_distance(self, s0, s1):

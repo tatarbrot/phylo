@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from Bio import Entrez, SeqIO
+from Bio import SeqIO
 from alignment import *
 from msa import *
 import numpy as np
@@ -8,7 +8,7 @@ import numpy as np
 class Tree:
     def __init__(self, sequences, names):
         self.sequences = sequences
-        self.nodes = self.sequences[:]
+        self.nodes = list(range(len(self.sequences)))
 
         self.names = names
         lengths = [len(l) for l in self.sequences]
@@ -51,19 +51,24 @@ class Tree:
                 if dist_node != child_node:
                     if d_m[child_node,dist_node] == np.inf:
                         d = self.sequence_distance(child_node, dist_node)
+                        print('d:',d)
                         d_m[child_node,dist_node] = d
                         d_m[dist_node,child_node] = d
                 else:
                     d_m[child_node,dist_node] = 0
 
 
-        while d_m.shape[0] > 1:
+        while d_m.shape[0] > 2:
             # calculate q matrix
             qm = np.zeros(d_m.shape)
+            qm[:,:] = np.inf
             for i in range(qm.shape[0]):
                 for j in range(i):
-                    qm[i,j] = (seq_len-2)*d_m[i,j] - sum(d_m[i,:]) -sum(d_m[:,j])
-                    qm[j,i] = qm[i,j]
+                    if i != j:
+                        qm[i,j] = (seq_len-2)*d_m[i,j] - sum(d_m[i,:]) -sum(d_m[:,j])
+                        qm[j,i] = qm[i,j]
+                    else:
+                        qm[i,j] = np.inf
 
             # find smallest q value
             minq = np.amin(qm)
@@ -71,8 +76,20 @@ class Tree:
             mini = minq[0][0]
             minj = minq[1][0]
 
+            print(d_m)
+            print(qm)
+
+            print(self.clusters)
+            print(self.clusters[mini], self.clusters[minj])
+            print(mini, minj)
+            print('--')
+
             diu = 0.5*d_m[mini,minj] + 1/(2*(seq_len-2))*(sum(d_m[:,minj]) - sum(d_m[mini,:]))
             dju = d_m[mini,minj] - diu
+
+            print(diu)
+            print(dju)
+            print('...')
 
             # create new node
             self.nodes.append(len(self.nodes))
@@ -80,19 +97,20 @@ class Tree:
 
             # update adjacencies
             self.expand_adjacency_matrix()
+            print('nd: {} u: {}'.format(nd, u))
             self.adjacency_matrix[u,nd] = 0
             self.adjacency_matrix[nd,u] = 0
 
-            self.adjacency_matrix[u,mini] = diu
-            self.adjacency_matrix[mini,u] = diu
-            self.adjacency_matrix[minj,u] = dju
-            self.adjacency_matrix[u,minj] = dju
+            self.adjacency_matrix[u,self.clusters[mini]] = diu
+            self.adjacency_matrix[self.clusters[mini],u] = diu
+            self.adjacency_matrix[self.clusters[minj],u] = dju
+            self.adjacency_matrix[u,self.clusters[minj]] = dju
 
             # remove old ajdacencies
-            self.adjacency_matrix[nd,mini] = np.inf
-            self.adjacency_matrix[mini,nd] = np.inf
-            self.adjacency_matrix[nd,minj] = np.inf
-            self.adjacency_matrix[minj,nd] = np.inf
+            self.adjacency_matrix[nd,self.clusters[mini]] = np.inf
+            self.adjacency_matrix[self.clusters[mini],nd] = np.inf
+            self.adjacency_matrix[nd,self.clusters[minj]] = np.inf
+            self.adjacency_matrix[self.clusters[minj],nd] = np.inf
 
             # start clustering
             if mini < minj:
@@ -110,15 +128,43 @@ class Tree:
             new_dm = np.delete(new_dm, n_from, axis=0)
             for i in range(new_dm.shape[0]):
                 if n_to != i:
-                    if n_to < i:
+                    if i >= n_from:
                         idx = i+1
                     else:
-                        idx = 1
+                        idx = i
 
                     new_dm[i,n_to] = 0.5*(d_m[idx,mini]+d_m[idx,minj]-d_m[mini,minj])
                     new_dm[n_to, i] = new_dm[i, n_to]
+                    print('new_dm[{}, {}] = {}'.format(i,n_to, new_dm[i,n_to]))
 
             d_m = new_dm
+
+        print(self.adjacency_matrix)
+
+        nw = self.newick_format(nd, [])
+        print(nw)
+
+    def newick_format(self, node, ignore):
+        ignore.append(node)
+        search = self.adjacency_matrix[node, :]
+        neighbours = np.where(search != np.inf)
+        nw = []
+        for nb in neighbours[0]:
+            if not nb in ignore:
+                if nb < len(self.sequences):
+                    print(self.names[nb])
+                    nw.append('{}:{}'.format(self.names[nb], search[nb]))
+                else:
+                    nw.append(self.newick_format(nb, ignore))
+
+        nw_str = '('
+        for n in nw:
+            nw_str += '{},'.format(n)
+
+        nw_str = nw_str[0:len(nw_str)-1]
+        nw_str += ')'
+        return nw_str
+
 
     def expand_adjacency_matrix(self):
         adj_entry = np.zeros([1,self.adjacency_matrix.shape[1]])
@@ -164,16 +210,12 @@ individuals = [
         {'name': 'C. bonanzensis', 'matK': 'KP980038', 'its': 'KP980408'},
         ]
 
-Entrez.email = 'tobias.moser@gmx.ch'
 seq_list = []
 name_list = []
 
 for i in individuals:
     print(i['name'], i['its'])
-    h = Entrez.efetch(db='nucleotide', id=i['its'], \
-            rettype='fasta', strand=1, seq_start=0, seq_stop=100)
-    record = SeqIO.read(h, 'fasta')
-    h.close()
+    record = SeqIO.read('{}_long.fasta'.format(i['its']), 'fasta')
     seq_list.append(record.seq)
     name_list.append(i['name'])
 
