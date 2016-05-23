@@ -15,7 +15,6 @@ class Msa(Tree):
         # create guid tree
         self.infer_tree()
 
-        print("Rooting guide tree (mid-point)")
         # root tree
         self.root_tree()
 

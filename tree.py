@@ -102,6 +102,7 @@ class Tree:
         return distances, route
 
     def root_tree(self):
+        print("Rooting tree (mid-point)")
         seq_len = len(self.sequences)
         tree_distances = np.zeros([seq_len, seq_len])
         routes = [[] for _ in range(seq_len)]
