@@ -1,5 +1,7 @@
 #!/usr/bin/python
+
 from Bio import Entrez, SeqIO
+
 individuals = [
         {'name': 'C. arenaria', 'matK': 'KP980114', 'its': 'AY757404'},
         {'name': 'C. bromoides Willd.', 'matK': 'KP980015', 'its': 'AY757404' },
