@@ -34,7 +34,7 @@ class Tree:
                     print(nam)
                     nw.append('{}:{}'.format(nam, search[nb]))
                 else:
-                    nw.append(self.newick_format(nb, ignore))
+                    nw.append('{}:{}'.format(self.newick_format(nb, ignore), search[nb]))
 
         nw_str = '('
         for n in nw:
