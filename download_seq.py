@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from Bio import Entrez, SeqIO
+import sys
 
 individuals = [
         {'name': 'C. arenaria', 'matK': 'KP980114', 'its': 'AY757404'},
@@ -42,10 +43,19 @@ Entrez.email = 'tobias.moser@gmx.ch'
 seq_list = []
 name_list = []
 
+lof = 'short'
+if len(sys.argv) > 1:
+    lof = sys.argv[1]
+
 for i in individuals:
     print(i['name'], i['its'])
-    h = Entrez.efetch(db='nucleotide', id=i['its'], \
-            rettype='fasta', strand=1)
+    if lof == 'short':
+        h = Entrez.efetch(db='nucleotide', id=i['its'], \
+                seq_start=0, seq_stop=100, \
+                rettype='fasta', strand=1)
+    else:
+        h = Entrez.efetch(db='nucleotide', id=i['its'], \
+                rettype='fasta', strand=1)
     record = SeqIO.read(h, 'fasta')
-    SeqIO.write(record, '{}_long.fasta'.format(i['its']), 'fasta')
+    SeqIO.write(record, '{}_{}.fasta'.format(i['its'], lof), 'fasta')
     h.close()
