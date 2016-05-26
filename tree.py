@@ -109,11 +109,15 @@ class Tree:
         for i in range(seq_len):
             tree_distances[i][:], routes[i] = self.node_distance(i, [], 0, [])
 
+
+        print(tree_distances)
         m = np.amax(tree_distances)
         long_dist = np.where(tree_distances == m)
 
         d_from = long_dist[0][0]
         d_to = long_dist[1][0]
+
+        print('from: {}, to: {}'.format(d_from, d_to))
         root_route = []
         i = 0
         while len(root_route) < 1:
@@ -121,6 +125,7 @@ class Tree:
                 root_route = routes[d_from][i]
             else:
                 i += 1
+            print(root_route)
 
         # add root_node
         self.nodes.append(len(self.nodes))
