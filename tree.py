@@ -72,7 +72,7 @@ class Tree:
             if s1[i] != s2[i]:
                 d += 1
 
-        return d/l
+        return float(d)/l
 
     def get_neighbour_nodes(self, node):
         search_in = self.adjacency_matrix[node][:]
