@@ -87,7 +87,7 @@ class NjTree(Tree):
             mini = minq[0][0]
             minj = minq[1][0]
 
-            diu = 0.5*d_m[mini,minj] + 1/(2*(seq_len-2))*(sum(d_m[:,minj]) - sum(d_m[mini,:]))
+            diu = 0.5*d_m[mini,minj] + float(1)/(2*(seq_len-2))*(sum(d_m[:,minj]) - sum(d_m[mini,:]))
             dju = d_m[mini,minj] - diu
 
             # create new node

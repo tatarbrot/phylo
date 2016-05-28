@@ -97,11 +97,11 @@ class Msa(Tree):
             self.expand_adjacency_matrix()
 
             # set adjacencies
-            self.adjacency_matrix[-1][self.clusters[c_from]] = min_dist/2
-            self.adjacency_matrix[-1][self.clusters[c_to]] = min_dist/2
+            self.adjacency_matrix[-1][self.clusters[c_from]] = float(min_dist)/2
+            self.adjacency_matrix[-1][self.clusters[c_to]] = float(min_dist)/2
 
-            self.adjacency_matrix[self.clusters[c_from]][-1] = min_dist/2
-            self.adjacency_matrix[self.clusters[c_to]][-1] = min_dist/2
+            self.adjacency_matrix[self.clusters[c_from]][-1] = float(min_dist)/2
+            self.adjacency_matrix[self.clusters[c_to]][-1] = float(min_dist)/2
 
             self.clusters[c_to] = self.nodes[-1]
             self.clusters.pop(c_from)
@@ -116,7 +116,7 @@ class Msa(Tree):
                         else:
                             idx = i
 
-                        new_d = (d_m[idx, c_to] + d_m[idx, c_from])/2
+                        new_d = float(d_m[idx, c_to] + d_m[idx, c_from])/2
                         new_d_m[c_to, i] = new_d
                         new_d_m[i, c_to] = new_d
 
@@ -160,4 +160,4 @@ class Msa(Tree):
                 d += self.jaccard_distance(aligned_sequences[0][0], \
                         aligned_sequences[1][0])
 
-        return d/(ni*nj)
+        return float(d)/(ni*nj)
