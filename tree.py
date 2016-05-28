@@ -11,7 +11,7 @@ class Tree:
         self.clusters = self.nodes[:]
         self.names = names
 
-        # create adjacency matrix
+        #create adjacency matrix
         seq_len = len(sequences)
         self.adjacency_matrix = np.zeros([seq_len, seq_len])
 

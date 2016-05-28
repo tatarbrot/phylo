@@ -94,7 +94,7 @@ class NjTree(Tree):
             self.nodes.append(len(self.nodes))
             u = self.nodes[-1]
 
-            # update adjacencies
+            #update adjacencies
             self.expand_adjacency_matrix()
             self.adjacency_matrix[u,nd] = 0
             self.adjacency_matrix[nd,u] = 0
@@ -121,7 +121,7 @@ class NjTree(Tree):
             self.clusters.pop(n_from)
             self.clusters[n_to] = u
 
-            # update distance matrix
+            #update distance matrix
             new_dm = np.delete(d_m, n_from, axis=1)
             new_dm = np.delete(new_dm, n_from, axis=0)
             for i in range(new_dm.shape[0]):
@@ -144,9 +144,9 @@ individuals = [
         {'name': 'C. leptopoda Mack.', 'matK': 'KP980068', 'its': 'KP980439'},
         {'name': 'C. disperma Dewey', 'matK': 'KP980093', 'its': 'KP980468'},
         {'name': 'C. elongata L.', 'matK': 'KP980000', 'its': 'KP980370'},
-        #{'name': 'C. arcta Boott', 'matK': 'KP980047', 'its': 'KP980417'},
-        #{'name': 'C. arctiformis Mack', 'matK': 'KP980004', 'its': 'KP980375'},
-        #{'name': 'C. bonanzensis Britton', 'matK': 'KP980038', 'its': 'KP980408'},
+        {'name': 'C. arcta Boott', 'matK': 'KP980047', 'its': 'KP980417'},
+        {'name': 'C. arctiformis Mack', 'matK': 'KP980004', 'its': 'KP980375'},
+        {'name': 'C. bonanzensis Britton', 'matK': 'KP980038', 'its': 'KP980408'},
         #{'name': 'C. brunnescens [Pers.] Poir.', 'matK': 'KP980130', 'its': 'KP980514'},
         #{'name': 'C. canescens L.', 'matK': '', 'its': 'KP980449'},
         #{'name': 'C. diastena V.I.Krecz.', 'matK': 'KP980089', 'its': 'KP980464'},
