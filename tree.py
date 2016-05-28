@@ -104,6 +104,7 @@ class Tree:
     def root_tree(self):
         print("Rooting tree (mid-point)")
         seq_len = len(self.sequences)
+        print(self.adjacency_matrix)
         tree_distances = np.zeros([seq_len, seq_len])
         routes = [[] for _ in range(seq_len)]
         for i in range(seq_len):
