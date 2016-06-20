@@ -39,15 +39,6 @@ individuals = [
         {'name': 'C. remota L.', 'matK': 'KP980019', 'its': 'KP980389'},
         ]
 
-# rosales from http://www.ncbi.nlm.nih.gov/popset/111558674?report=fasta
-individuals = [
-        {'name': 'Malus x domestica', 'id': 'DQ851531.1'},
-        {'name': 'Pyrus communis', 'id': 'DQ851548.1'},
-        {'name': 'Prunus dulcis', 'id': 'DQ851543.1'},
-        {'name': 'Fragaria vesca', 'id': 'DQ851521.1'},
-        {'name': 'Mespilus germanica', 'id': 'DQ851533.1'},
-        ]
-
 Entrez.email = 'tobias.moser@gmx.ch'
 seq_list = []
 name_list = []
