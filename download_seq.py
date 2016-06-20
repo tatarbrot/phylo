@@ -39,6 +39,15 @@ individuals = [
         {'name': 'C. remota L.', 'matK': 'KP980019', 'its': 'KP980389'},
         ]
 
+# rosales from http://www.ncbi.nlm.nih.gov/popset/111558674?report=fasta
+individuals = [
+        {'name': 'Malus x domestica', 'id': 'DQ851531.1'},
+        {'name': 'Pyrus communis', 'id': 'DQ851548.1'},
+        {'name': 'Prunus dulcis', 'id': 'DQ851543.1'},
+        {'name': 'Fragaria vesca', 'id': 'DQ851521.1'},
+        {'name': 'Mespilus germanica', 'id': 'DQ851533.1'},
+        ]
+
 Entrez.email = 'tobias.moser@gmx.ch'
 seq_list = []
 name_list = []
@@ -48,14 +57,14 @@ if len(sys.argv) > 1:
     lof = sys.argv[1]
 
 for i in individuals:
-    print(i['name'], i['its'])
+    print(i['name'], i['id'])
     if lof == 'short':
-        h = Entrez.efetch(db='nucleotide', id=i['its'], \
+        h = Entrez.efetch(db='nucleotide', id=i['id'], \
                 seq_start=0, seq_stop=100, \
                 rettype='fasta', strand=1)
     else:
-        h = Entrez.efetch(db='nucleotide', id=i['its'], \
+        h = Entrez.efetch(db='nucleotide', id=i['id'], \
                 rettype='fasta', strand=1)
     record = SeqIO.read(h, 'fasta')
-    SeqIO.write(record, '{}_{}.fasta'.format(i['its'], lof), 'fasta')
+    SeqIO.write(record, '{}_{}.fasta'.format(i['id'], lof), 'fasta')
     h.close()
