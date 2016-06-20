@@ -15,6 +15,7 @@ class Alignment:
             self.weights = weights
 
         self.weights = np.array(self.weights)
+
         # normalize weights
         for i in range(len(self.weights)):
             self.weights[i] = np.true_divide(self.weights[i], \
@@ -72,14 +73,18 @@ class Alignment:
         l1 = len(self.sequences[1])
         match_score = 0
 
+        # get scores of pairwise character alignments
         match_scores = np.zeros(l1*l0)
         for i in range(l0):
             for j in range(l1):
                 match_scores[j+i*l1] = \
                         self.score(r,c,i,j)*self.weights[0][i]*self.weights[1][j]
 
+        # create mean of scores
         match_score = np.mean(match_scores)
 
+        # append all possible scores to an array
+        # with the according position of the cell
         scores.append(self.alignment_matrix[r-1][c-1] + match_score)
         pos.append((r-1,c-1))
 
@@ -89,10 +94,13 @@ class Alignment:
         scores.append(self.alignment_matrix[r-1][c] + self.delta)
         pos.append((r-1,c))
 
+        # get best score
         pos = np.array(pos)
         scores = np.array(scores)
 
-        # may be biased !
+        # get best score
+        # pick the first if there are more than one equal
+        # to the best score
         m = np.amax(scores)
         idx = np.where(scores == m)
         if len(idx[0]) == 1:
@@ -106,14 +114,21 @@ class Alignment:
             new_idx = np.where(np.array(check_scores) == np.amax(check_scores))
             p = check_pos[new_idx[0][0]]
 
+        # set route for the according cell
         self.route[r][c] = p
+        # update score of cell
         self.alignment_matrix[r][c] = max(scores)
 
     def align(self):
+        # fill borders with either always deletion/insertion gap penalty
         self.fill_borders()
+
+        # get shape of alignment matrix
         rows = self.alignment_matrix.shape[0]
         cols = self.alignment_matrix.shape[1]
         self.route = np.array([[(0,0) for _ in range(cols)] for _ in range(rows)])
+
+        # create score for each cell
         for r in range(1,rows):
             for c in range(1, cols):
                 self.score_cell(r,c)
@@ -136,21 +151,28 @@ class Alignment:
         s0 = ['' for _ in range(l0)]
         s1 = ['' for _ in range(l1)]
 
+
+        # walk along the created route and
+        # put together the sequences according
+        # to the choices made in score_cell()
         while (r,c) != (0,0):
             p = self.route[r][c]
             score += self.alignment_matrix[r][c]
 
             if p[0] == r-1 and p[1] == c-1:
+                # align characters
                 for i in range(l0):
                     s0[i] = '{0}{1}'.format(self.sequences[0][i][r], s0[i])
                 for j in range(l1):
                     s1[j] = '{0}{1}'.format(self.sequences[1][j][c], s1[j])
             elif p[0] == r and p[1] == c-1:
+                # deletion in sequence group 0
                 for i in range(l0):
                     s0[i] = '.{0}'.format(s0[i])
                 for j in range(l1):
                     s1[j] = '{0}{1}'.format(self.sequences[1][j][c], s1[j])
             elif p[0] == r-1 and p[1] == c:
+                # insertion in sequence group 0
                 for i in range(l0):
                     s0[i] = '{0}{1}'.format(self.sequences[0][i][r], s0[i])
                 for j in range(l1):
@@ -160,42 +182,3 @@ class Alignment:
             c = p[1]
 
         return [s0, s1]
-
-    def count_score_from(self, r, c):
-        if r == 0 and c == 0:
-            return [0],[(0,0)]
-        else:
-            if c > 0 and r > 0:
-                pos = [(r-1, c-1), (r-1, c), (r, c-1)]
-            elif c == 0:
-                pos = [(r-1, c)]
-            elif r == 0:
-                pos = [(r, c-1)]
-
-            scores = []
-            for p in pos:
-                scores.append(self.alignment_matrix[p])
-
-            scores = np.array(scores)
-            # find routes
-            rts = np.where(scores == np.amax(scores))
-            new_scores = []
-            new_routes = []
-            for i in range(len(rts[0])):
-                route = rts[0][i]
-                if pos[route] != (0,0):
-                    sc, rt = self.count_score_from(pos[route][0], pos[route][1])
-                    np_sc = np.array(sc)
-                    np_rt = np.array(rt)
-
-                    best_sc = np.where(np_sc == np.amax(sc))
-                    for i in range(len(best_sc[0])):
-                        new_scores.append(sc[best_sc[0][i]] + scores[route])
-                        new_routes.append(rt[best_sc[0][i]])
-                        new_routes[-1].append(pos[route])
-                else:
-                    new_scores.append(scores[route])
-                    new_routes.append([pos[route]])
-
-
-            return new_scores, new_routes

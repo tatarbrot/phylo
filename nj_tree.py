@@ -20,9 +20,9 @@ class NjTree(Tree):
 
 
     def create_tree(self):
-
         self.infer_tree()
         self.root_tree()
+        # create newick format from adjacency matrix
         nw = self.newick_format(self.root_node, [])
         return nw
 
@@ -35,13 +35,16 @@ class NjTree(Tree):
 
         # start with star topology
         self.nodes.append(len(self.nodes))
+        # start with n clusters (at the beginning each
+        # node represents a cluster)
         self.clusters = self.nodes[:]
-
         nodes_len = len(self.nodes)
 
+        # create distance matrix
         d_m = np.zeros([seq_len, seq_len])
         d_m[:,:] = np.inf
 
+        # expand adjacency matrix for first internal node
         self.expand_adjacency_matrix()
         l_entry = [0,0]
         l_entry[0] = self.adjacency_matrix.shape[0]-1
@@ -87,6 +90,7 @@ class NjTree(Tree):
             mini = minq[0][0]
             minj = minq[1][0]
 
+            # calculate distance to new internal node
             diu = 0.5*d_m[mini,minj] + float(1)/(2*(seq_len-2))*(sum(d_m[:,minj]) - sum(d_m[mini,:]))
             dju = d_m[mini,minj] - diu
 
@@ -121,7 +125,7 @@ class NjTree(Tree):
             self.clusters.pop(n_from)
             self.clusters[n_to] = u
 
-            #update distance matrix
+            # update distance matrix
             new_dm = np.delete(d_m, n_from, axis=1)
             new_dm = np.delete(new_dm, n_from, axis=0)
             for i in range(new_dm.shape[0]):
@@ -180,10 +184,9 @@ lof = 'short'
 if len(sys.argv) > 1:
     lof = sys.argv[1]
 
+# load fasta files
 for i in individuals:
-    #print(i['name'], i['id'])
     print(i['name'], i['its'])
-    #record = SeqIO.read('{}_{}.fasta'.format(i['id'], lof), 'fasta')
     record = SeqIO.read('{}_{}.fasta'.format(i['its'], lof), 'fasta')
     seq_list.append(record.seq)
     name_list.append(i['name'])
@@ -196,7 +199,10 @@ sequences, names = m.align()
 t = NjTree(sequences, names)
 nw = t.create_tree()
 
+# print newick format
 print(nw)
 handle = StringIO(nw)
+
+# print ascii tree
 disp_tree = Phylo.read(handle, 'newick')
 Phylo.draw_ascii(disp_tree)

@@ -12,14 +12,17 @@ class Msa(Tree):
     def align(self):
         print("Performing Multiptle sequence alignment")
         print("Inferring guide tree")
-        # create guid tree
+
+        # create guide tree
         self.infer_tree()
 
         # root tree
         self.root_tree()
 
         print("Aligning sequences")
+        # continue if rooting worked
         if self.root_node != -1:
+
             # continue, finally align sequences
             seq = self.align_sequences(self.root_node, [])
 
@@ -33,20 +36,29 @@ class Msa(Tree):
             print('could not root tree')
 
     def align_sequences(self, node, ignore):
-        # get neighbour_nodes
+        # align sequences according to the inferred guide tree
+        # recursive function
+
+        # find all neighbors and add self to ignore list
         neighbours = self.get_neighbour_nodes(node)
         ignore.append(node)
         all_seq_len = len(self.sequences)
         tree_nodes = [n < all_seq_len for n in neighbours]
 
+        # create list with what has to be aligned
         align_seq = []
         for n in neighbours:
             if not n in ignore:
                 if n < all_seq_len:
+                    # if leaf node, add sequences to aligning list
                     align_seq.append([(self.sequences[n], n)])
                 else:
+                    # if internal node, first align the children of the
+                    # according node
                     align_seq.append(self.align_sequences(n, ignore))
 
+
+        # align what has been added to the alignment list
         seq = []
         if len(align_seq) > 2:
             print('unexpected number (>2) of sequences to align')
@@ -64,12 +76,17 @@ class Msa(Tree):
 
 
     def infer_tree(self):
+        # create guide tree with UPGMA method
+
         seq_len = len(self.sequences)
 
+        # create distance matrix
         d_m = np.zeros([seq_len, seq_len])
         d_m[:][:] = np.inf
 
+        # continue until there is only one cluster left
         while len(self.clusters) > 1:
+            # update distnaces
             for i in range(d_m.shape[0]):
                 for j in range(i):
                     if d_m[i,j] == np.inf:
@@ -77,7 +94,7 @@ class Msa(Tree):
                         d_m[j,i] = d_m[i,j]
 
 
-            # find minimums
+            # find minima
             minimas = []
             for i in range(1,d_m.shape[0]):
                 minimas.append(np.amin(d_m[i][0:i]))
@@ -85,6 +102,8 @@ class Msa(Tree):
             min_dist = min(minimas)
             min_idx = np.where(d_m == min_dist)
 
+            # find smaller index and join nodes into smaller
+            # index
             if min_idx[0][0] < min_idx[1][0]:
                 c_from = min_idx[1][0]
                 c_to = min_idx[0][0]
@@ -92,23 +111,23 @@ class Msa(Tree):
                 c_from = min_idx[0][0]
                 c_to = min_idx[1][0]
 
-            # create new node
+            # create new internal node in adjacency matrix
             self.nodes.append(len(self.nodes))
             self.expand_adjacency_matrix()
 
-            # set adjacencies
+            # set distances in adjacency matrix
             self.adjacency_matrix[-1][self.clusters[c_from]] = float(min_dist)/2
             self.adjacency_matrix[-1][self.clusters[c_to]] = float(min_dist)/2
-
             self.adjacency_matrix[self.clusters[c_from]][-1] = float(min_dist)/2
             self.adjacency_matrix[self.clusters[c_to]][-1] = float(min_dist)/2
 
+            # update cluster with smaller index
             self.clusters[c_to] = self.nodes[-1]
             self.clusters.pop(c_from)
 
+            # update distance matrix
             new_d_m = np.delete(d_m, (c_from), axis = 0)
             new_d_m = np.delete(new_d_m, (c_from), axis = 1)
-
             for i in range(new_d_m.shape[0]):
                     if i != c_to:
                         if i >= c_from:
@@ -123,6 +142,8 @@ class Msa(Tree):
             d_m = new_d_m
 
     def tree_members(self, ti, ignore):
+        # find children of current node and return list of
+        # leaf nodes
         if ti >= len(self.sequences):
             # get neighbours
             mem = self.get_neighbour_nodes(ti)

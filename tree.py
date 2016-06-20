@@ -6,23 +6,32 @@ import re
 
 class Tree:
     def __init__(self, sequences, names):
+        # create list of ...
+        # seqeunces
         self.sequences = sequences
+        # nodes
         self.nodes = list(range(len(self.sequences)))
+        # clusters
         self.clusters = self.nodes[:]
+        # names
         self.names = names
 
-        #create adjacency matrix
+        # create adjacency matrix
         seq_len = len(sequences)
         self.adjacency_matrix = np.zeros([seq_len, seq_len])
 
+        # set adjacencies to infinity
         self.adjacency_matrix[:][:] = np.inf
 
+        # no root node known
         self.root_node = -1
 
     def infer_tree(self):
+        # must be implemented by children
         pass
 
     def newick_format(self, node, ignore):
+        # create newick output
         ignore.append(node)
         search = self.adjacency_matrix[node, :]
         neighbours = np.where(search != np.inf)
@@ -55,6 +64,7 @@ class Tree:
         self.adjacency_matrix = np.concatenate((self.adjacency_matrix, adj_entry), axis=1)
 
     def sequence_distance(self, ni, nj):
+        # jaccards distance between two sequences
         s1 = self.sequences[ni]
         s2 = self.sequences[nj]
 
@@ -75,12 +85,15 @@ class Tree:
         return float(d)/l
 
     def get_neighbour_nodes(self, node):
+        # return immediate neighbour nodes (not recursive)
         search_in = self.adjacency_matrix[node][:]
         neighbours = np.where(search_in < np.inf)
 
         return neighbours[0]
 
     def node_distance(self, start, ignore, add, route):
+        # distance between two nodes
+        # walk along adjacencies
         seq_len = len(self.sequences)
         distances = np.zeros([seq_len])
 
@@ -104,36 +117,33 @@ class Tree:
     def root_tree(self):
         print("Rooting tree (mid-point)")
         seq_len = len(self.sequences)
-        print(self.adjacency_matrix)
         tree_distances = np.zeros([seq_len, seq_len])
         routes = [[] for _ in range(seq_len)]
+        # calculate distances of leaf nodes from the tree distances
         for i in range(seq_len):
             tree_distances[i][:], routes[i] = self.node_distance(i, [], 0, [])
 
-
-        print(tree_distances)
+        # take maximal length
         m = np.amax(tree_distances)
         long_dist = np.where(tree_distances == m)
 
         d_from = long_dist[0][0]
         d_to = long_dist[1][0]
 
-        print('from: {}, to: {}'.format(d_from, d_to))
         root_route = []
         i = 0
+        # find route which leads from d_from to d_to
         while len(root_route) < 1:
             if routes[d_from][i][-1] == d_to:
                 root_route = routes[d_from][i]
             else:
                 i += 1
-            print(root_route)
 
-        # add root_node
+        # add root_node in the middle in between
         self.nodes.append(len(self.nodes))
         self.root_node = self.nodes[-1]
-
         self.expand_adjacency_matrix()
-
+        # find middle
         mid = m/2
         start_node = -1
         stop_node = -1
@@ -159,9 +169,7 @@ class Tree:
         # set distances to root_node
         stop_dist = abs(mid-stop_dist)
         start_dist = abs(mid-start_dist)
-
         self.adjacency_matrix[stop_node][self.root_node] = stop_dist
         self.adjacency_matrix[self.root_node][stop_node] = stop_dist
-
         self.adjacency_matrix[start_node][self.root_node] = start_dist
         self.adjacency_matrix[self.root_node][start_node] = start_dist

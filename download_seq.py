@@ -3,6 +3,7 @@
 from Bio import Entrez, SeqIO
 import sys
 
+# definition of dataset
 individuals = [
         {'name': 'C. arenaria', 'matK': 'KP980114', 'its': 'AY757404'},
         {'name': 'C. bromoides Willd.', 'matK': 'KP980015', 'its': 'AY757404' },
@@ -43,6 +44,7 @@ Entrez.email = 'tobias.moser@gmx.ch'
 seq_list = []
 name_list = []
 
+# load sequences (long or short) and save to accession_nr.fasta
 lof = 'short'
 if len(sys.argv) > 1:
     lof = sys.argv[1]
